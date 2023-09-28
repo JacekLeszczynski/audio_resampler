@@ -71,6 +71,7 @@ type
     SpeedButton10: TSpeedButton;
     SpeedButton11: TSpeedButton;
     SpeedButton12: TSpeedButton;
+    SpeedButton13: TSpeedButton;
     SpeedButton2: TSpeedButton;
     SpeedButton3: TSpeedButton;
     SpeedButton4: TSpeedButton;
@@ -98,6 +99,7 @@ type
     procedure SpeedButton10Click(Sender: TObject);
     procedure SpeedButton11Click(Sender: TObject);
     procedure SpeedButton12Click(Sender: TObject);
+    procedure SpeedButton13Click(Sender: TObject);
     procedure SpeedButton7Click(Sender: TObject);
     procedure SpeedButton8Click(Sender: TObject);
     procedure SpeedButton9Click(Sender: TObject);
@@ -308,10 +310,17 @@ end;
 procedure TForm1.SpeedButton10Click(Sender: TObject);
 var
   proc: TProcess;
-  s: string;
+  s,s2: string;
 begin
-  s:=ChangeFileExt(Label37.Caption,'.wav');
-  if not mess.ShowConfirmationYesNo('Audio z pliku źródłowego zostanie zapisane pod podaną nazwą:^'+s+'^^Kontynuować?') then exit;
+  if RadioButton1.Checked then
+  begin
+    s:=ChangeFileExt(Label36.Caption,'.wav');
+    s2:='źródłowego';
+  end else begin
+    s:=ChangeFileExt(Label37.Caption,'.wav');
+    s2:='docelowego';
+  end;
+  if not mess.ShowConfirmationYesNo('Audio z pliku '+s2+' zostanie zapisane pod podaną nazwą:^'+s+'^^Kontynuować?') then exit;
   application.ProcessMessages;
   proc:=TProcess.Create(self);
   try
@@ -319,7 +328,7 @@ begin
     proc.ShowWindow:=swoHIDE;
     proc.Executable:='ffmpeg';
     proc.Parameters.Add('-i');
-    proc.Parameters.Add(Label37.Caption);
+    if RadioButton1.Checked then proc.Parameters.Add(Label36.Caption) else proc.Parameters.Add(Label37.Caption);
     proc.Parameters.Add('-vn');
     if ComboBox2.ItemIndex>0 then proc.Parameters.Add('-ac');
     case ComboBox2.ItemIndex of
@@ -397,6 +406,8 @@ begin
       mplayer2.Position:=a.poz1;
       mplayer2.Pause;
     end;
+    (* przeliczam dane *)
+    oblicz;
   end;
 end;
 
@@ -429,6 +440,58 @@ begin
   end;
 end;
 
+procedure TForm1.SpeedButton13Click(Sender: TObject);
+var
+  a: TARC;
+  s1,s2: string;
+begin
+  (* zamiana miejscami tego co jest *)
+  s2:=Label36.Caption;
+  s1:=Label37.Caption;
+  Label36.Caption:=s1;
+  Label37.Caption:=s2;
+  rec.dlugosc1:=a.dlugosc1;
+  rec.dlugosc2:=a.dlugosc2;
+  rec.w1a:=a.w1a;
+  rec.w1b:=a.w1b;
+  rec.w2a:=a.w2a;
+  rec.w2b:=a.w2b;
+  rec.wsp:=a.wsp;
+  rec.wsp2:=a.wsp2;
+  poz1:=a.poz1;
+  poz2:=a.poz2;
+  (* wypełnienie kontrolek *)
+  Label39.Caption:=FormatDateTime('hh:nn:ss.zzz',IntegerToTime(rec.dlugosc1));
+  Label45.Caption:=FormatDateTime('hh:nn:ss.zzz',IntegerToTime(rec.dlugosc2));
+  Label40.Caption:=FormatDateTime('hh:nn:ss.zzz',IntegerToTime(rec.w1a));
+  Label43.Caption:=FormatDateTime('hh:nn:ss.zzz',IntegerToTime(rec.w1b));
+  Label47.Caption:=FormatDateTime('hh:nn:ss.zzz',IntegerToTime(rec.w2a));
+  Label49.Caption:=FormatDateTime('hh:nn:ss.zzz',IntegerToTime(rec.w2b));
+
+  poz1:=a.poz1;
+  poz2:=a.poz2;
+  (* odtworzenie struktury multimedialnej *)
+  if s1<>a.film_docelowy then
+  begin
+    if mplayer2.Playing then mplayer2.Pause;
+    mplayer1.Stop;
+    mplayer1.Filename:=a.film_docelowy;
+    mplayer1.Play;
+    sleep(1000);
+    mplayer1.Position:=a.poz1;
+    mplayer1.Pause;
+  end;
+  if s2<>a.film_zrodlowy then
+  begin
+    mplayer2.Stop;
+    mplayer2.Filename:=a.film_zrodlowy;
+    mplayer2.Play;
+    sleep(1000);
+    mplayer2.Position:=a.poz1;
+    mplayer2.Pause;
+  end;
+end;
+
 procedure TForm1.SpeedButton7Click(Sender: TObject);
 begin
   rec.w1a:=mplayer1.SingleMpToInteger(mplayer1.Position);
@@ -450,12 +513,19 @@ end;
 procedure TForm1.SpeedButton9Click(Sender: TObject);
 var
   proc: TProcess;
-  s: string;
+  s,s2: string;
   bb: boolean;
   a,b: integer;
 begin
-  s:=ChangeFileExt(Label37.Caption,'.wav');
-  if not mess.ShowConfirmationYesNo('Audio z pliku źródłowego zostanie zapisane pod podaną nazwą:^'+s+'^^Kontynuować?') then exit;
+  if RadioButton1.Checked then
+  begin
+    s:=ChangeFileExt(Label36.Caption,'.wav');
+    s2:='źródłowego';
+  end else begin
+    s:=ChangeFileExt(Label37.Caption,'.wav');
+    s2:='docelowego';
+  end;
+  if not mess.ShowConfirmationYesNo('Audio z pliku '+s2+' zostanie zapisane pod podaną nazwą:^'+s+'^^Kontynuować?') then exit;
   bb:=mess.ShowConfirmationYesNo('Niepotrzebny początek pliku audio zostanie wycięty.^Czy ma być wycięta niepotrzebna końcówka tego pliku?');
   application.ProcessMessages;
   (* obliczenia wycięć *)
@@ -469,7 +539,7 @@ begin
     proc.ShowWindow:=swoHIDE;
     proc.Executable:='ffmpeg';
     proc.Parameters.Add('-i');
-    proc.Parameters.Add(Label37.Caption);
+    if RadioButton1.Checked then proc.Parameters.Add(Label36.Caption) else proc.Parameters.Add(Label37.Caption);
     proc.Parameters.Add('-vn');
     if ComboBox2.ItemIndex>0 then proc.Parameters.Add('-ac');
     case ComboBox2.ItemIndex of
@@ -662,8 +732,8 @@ begin
     rec.wsp2:=w2;
     rec.dlugosc3:=d;
     Label51.Caption:=FormatDateTime('hh:nn:ss.zzz',IntegerToTime(d));
-    Label53.Caption:=FormatFloat('0.000',w*100);
-    Label55.Caption:=FormatFloat('0.000',w2*100);
+    Label53.Caption:=FormatFloat('0.00000000',w*100);
+    Label55.Caption:=FormatFloat('0.00000000',w2*100);
     //uELED1.Active:=false;
   except
     //uELED1.Active:=true;
